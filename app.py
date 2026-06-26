@@ -9,9 +9,13 @@ app.secret_key = "career_chatbot_secret"
 # GEMINI CONFIGURATION
 # ==========================
 
-API_KEY = "AQ.Ab8RN6LBu3QPY0yZTOrr0xMrZZJgEO2lQkd-PYtrHQvLnGZ83g"
+import os
+
+API_KEY = os.getenv("API_KEY")
 
 genai.configure(api_key=API_KEY)
+
+
 
 model = genai.GenerativeModel("models/gemini-2.5-flash")
 
