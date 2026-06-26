@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate Roadmap — Student Success Copilot</title>
@@ -209,8 +210,7 @@
 
         let data = await response.json();
 
-        document.getElementById("output").innerHTML =
-            data.result;
+document.getElementById("output").innerHTML = marked.parse(data.roadmap);
     }
 </script>
 
