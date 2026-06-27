@@ -179,50 +179,59 @@ def logout():
 # ==========================
 # ROADMAP GENERATOR
 # ==========================
+# ✅ CORRECT — every line inside the function indented with 4 spaces
 @app.route("/roadmap", methods=["POST"])
 def roadmap():
+
     if "user_id" not in session:
         return jsonify({"error": "Not logged in"}), 401
 
     data = request.get_json()
-    user_id = session["user_id"]
 
     prompt = f"""
     You are a career guidance expert for engineering students.
-    Generate a detailed, structured academic and career roadmap for this student:
-
+    Generate a detailed academic and career roadmap for this student:
     Name: {data["name"]}
     Branch: {data["branch"]}
     Year: {data["year"]}
     CGPA: {data["cgpa"]}
     Interest: {data["interest"]}
-
-    Include: semester-wise goals, skills to learn, projects to build,
-    certifications to pursue, and internship/placement tips.
-    Format it clearly with headings and bullet points.
     """
-     try:
+
+    try:
         response = model.generate_content(prompt)
         roadmap_text = response.text
 
     except Exception as e:
         error_message = str(e)
-
-        # Detect quota error specifically
         if "429" in error_message or "ResourceExhausted" in error_message:
             return jsonify({
                 "error": "quota",
-                "message": "Gemini API rate limit reached. Please wait 60 seconds and try again."
+                "message": "Rate limit reached. Please wait 60 seconds and try again."
             }), 429
-        
         return jsonify({
             "error": "api_error",
-            "message": "AI service is temporarily unavailable. Please try again."
+            "message": "AI service is unavailable. Please try again."
         }), 500
 
+    import os
+    conn = sqlite3.connect(os.path.join(app.root_path, "students.db"))
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO roadmaps (user_id, branch, year, cgpa, interest, roadmap)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        session["user_id"],
+        data["branch"],
+        data["year"],
+        data["cgpa"],
+        data["interest"],
+        roadmap_text
+    ))
+    conn.commit()
+    conn.close()
 
-    response = model.generate_content(prompt)
-    roadmap_text = response.text
+    return jsonify({"roadmap": roadmap_text})
 
     # ✅ Save to database
     import os
