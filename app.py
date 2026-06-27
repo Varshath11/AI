@@ -204,14 +204,17 @@ def roadmap():
 
     except Exception as e:
         error_message = str(e)
+        print(f"GEMINI ERROR: {error_message}")
+
         if "429" in error_message or "ResourceExhausted" in error_message:
             return jsonify({
                 "error": "quota",
                 "message": "Rate limit reached. Please wait 60 seconds and try again."
             }), 429
+
         return jsonify({
             "error": "api_error",
-            "message": "AI service is unavailable. Please try again."
+            "message": f"Error: {error_message}"
         }), 500
 
     import os
