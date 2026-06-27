@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "career_chatbot_secret"
 
 # ==========================
-# GEMINI CONFIGURATION
+# GEMINI CONFIGURATIO
 # ==========================
 
 import os
@@ -18,7 +18,6 @@ genai.configure(api_key=API_KEY)
 
 
 model = genai.GenerativeModel("models/gemini-2.5-flash")
-
 
 # ==========================
 # HOME PAGE
@@ -40,7 +39,7 @@ def home():
 def generate_roadmap():
 
     if "user_id" not in session:
-        return redirect("/login")
+       return jsonify({"error": "Not logged in"}), 401
 
     return render_template("index.html")
 
@@ -180,73 +179,52 @@ def logout():
 # ==========================
 # ROADMAP GENERATOR
 # ==========================
-
 @app.route("/roadmap", methods=["POST"])
 def roadmap():
+    if "user_id" not in session:
+        return jsonify({"error": "Not logged in"}), 401
 
-    data = request.json
-
-    name = data["name"]
-    branch = data["branch"]
-    year = data["year"]
-    cgpa = data["cgpa"]
-    interest = data["interest"]
+    data = request.get_json()
+    user_id = session["user_id"]
 
     prompt = f"""
-    You are an expert engineering career mentor.
+    You are a career guidance expert for engineering students.
+    Generate a detailed, structured academic and career roadmap for this student:
 
-    Student Details:
+    Name: {data["name"]}
+    Branch: {data["branch"]}
+    Year: {data["year"]}
+    CGPA: {data["cgpa"]}
+    Interest: {data["interest"]}
 
-    Name: {name}
-    Branch: {branch}
-    Year: {year}
-    CGPA: {cgpa}
-    Interest: {interest}
-
-    Generate:
-
-    1. Suitable Career Domains
-    2. Skills To Learn
-    3. 6 Month Roadmap
-    4. Project Ideas
-    5. Internship Guidance
-    6. Placement Tips
-
-    Make the response detailed and beginner friendly.
+    Include: semester-wise goals, skills to learn, projects to build,
+    certifications to pursue, and internship/placement tips.
+    Format it clearly with headings and bullet points.
     """
 
     response = model.generate_content(prompt)
-
     roadmap_text = response.text
 
-    if "user_id" in session:
-
-     user_id = session["user_id"]
-
-    conn = sqlite3.connect("students.db")
+    # ✅ Save to database
+    import os
+    db_path = os.path.join(app.root_path, "students.db")
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-
     cursor.execute("""
-    INSERT INTO roadmaps
-    (user_id, branch, year, cgpa, interest, roadmap)
-
-    VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO roadmaps (user_id, branch, year, cgpa, interest, roadmap)
+        VALUES (?, ?, ?, ?, ?, ?)
     """, (
         user_id,
-        branch,
-        year,
-        cgpa,
-        interest,
+        data["branch"],
+        data["year"],
+        data["cgpa"],
+        data["interest"],
         roadmap_text
     ))
-
     conn.commit()
     conn.close()
 
-    return jsonify({
-        "result": roadmap_text.replace("\n", "<br>")
-    })
-
+    return jsonify({"roadmap": roadmap_text})
 
 # ==========================
 # RUN APP
