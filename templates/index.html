@@ -178,39 +178,52 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
 <script>
     async function generateRoadmap() {
-
-        let name = document.getElementById("name").value;
-        let branch = document.getElementById("branch").value;
-        let year = document.getElementById("year").value;
-        let cgpa = document.getElementById("cgpa").value;
-        let interest = document.getElementById("interest").value;
 
         const outputEl = document.getElementById("output");
         outputEl.innerHTML = '<div class="generating-text">Generating your personalized roadmap...</div>';
 
-        let response = await fetch("/roadmap", {
+        try {
 
-            method: "POST",
+            let response = await fetch("/roadmap", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: document.getElementById("name").value,
+                    branch: document.getElementById("branch").value,
+                    year: document.getElementById("year").value,
+                    cgpa: document.getElementById("cgpa").value,
+                    interest: document.getElementById("interest").value
+                })
+            });
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+            const data = await response.json();
 
-            body: JSON.stringify({
-                name: name,
-                branch: branch,
-                year: year,
-                cgpa: cgpa,
-                interest: interest
-            })
+            if (!response.ok || data.error) {
+                outputEl.innerHTML = `
+                    <div style="color: #f87171; background: rgba(248,113,113,0.1);
+                         border: 1px solid rgba(248,113,113,0.3); border-radius: 10px;
+                         padding: 1rem; font-size: 14px;">
+                        ⚠️ ${data.message || "Something went wrong. Please try again."}
+                    </div>`;
+                return;
+            }
 
-        });
+            outputEl.innerHTML = marked.parse(data.roadmap);
 
-        let data = await response.json();
-
-document.getElementById("output").innerHTML = marked.parse(data.roadmap);
+        } catch (err) {
+            outputEl.innerHTML = `
+                <div style="color: #f87171; background: rgba(248,113,113,0.1);
+                     border: 1px solid rgba(248,113,113,0.3); border-radius: 10px;
+                     padding: 1rem; font-size: 14px;">
+                    ⚠️ Network error. Please check your connection and try again.
+                </div>`;
+        }
     }
 </script>
 
