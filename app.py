@@ -201,6 +201,25 @@ def roadmap():
     certifications to pursue, and internship/placement tips.
     Format it clearly with headings and bullet points.
     """
+     try:
+        response = model.generate_content(prompt)
+        roadmap_text = response.text
+
+    except Exception as e:
+        error_message = str(e)
+
+        # Detect quota error specifically
+        if "429" in error_message or "ResourceExhausted" in error_message:
+            return jsonify({
+                "error": "quota",
+                "message": "Gemini API rate limit reached. Please wait 60 seconds and try again."
+            }), 429
+        
+        return jsonify({
+            "error": "api_error",
+            "message": "AI service is temporarily unavailable. Please try again."
+        }), 500
+
 
     response = model.generate_content(prompt)
     roadmap_text = response.text
