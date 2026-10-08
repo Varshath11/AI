@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, jsonify, redirect, session
 import google.generativeai as genai
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+app.secret_key = "career_chatbot_secret"
 # ==========================
 # GEMINI CONFIGURATIO
 # ==========================
